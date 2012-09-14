@@ -1,0 +1,117 @@
+﻿// This is a Spec Explorer coordination script (Cord version 1.0).
+// Here you define configurations and machines describing the
+// exploration task you want to perform.
+
+using TFTPproject.TestAdapter;
+
+/// Contains actions of the model, bounds, and switches.
+config Main 
+{
+    action abstract static void TestAdapter.sendReadRequestAdapter();
+    action abstract static void TestAdapter.receiveDataBlockAdapter();
+    action abstract static void TestAdapter.sendACKAdapter();
+    action abstract static bool TestAdapter.canGetExitAdapter(int len);
+
+    action abstract static void TestAdapter.sendWriteRequestAdapter();
+    action abstract static void TestAdapter.sendDataBlockAdapter();
+    action abstract static void TestAdapter.receiveACKAdapter();
+    action abstract static bool TestAdapter.canPutExitAdapter(int len);
+
+    action abstract static void TestAdapter.checker(int m);
+
+    switch StateBound = none;
+    switch StepBound = 500;
+    switch PathDepthBound = 500;
+    switch GeneratedTestPath = "..\\TFTPproject.TestSuite";
+    switch GeneratedTestNamespace = "TFTPproject.TestAdapter";
+    switch TestEnabled = false;
+    switch ForExploration = false;
+}
+
+config ParameterConfiguration : Main
+{
+    action abstract static bool TestAdapter.canGetExitAdapter(int len)
+        where
+        {.
+            Condition.In(len, 0, 8, 508, 512, 516, 1024);
+        .};
+    action abstract static bool TestAdapter.canPutExitAdapter(int len)
+        where
+        {.
+            Condition.In(len, 0, 8, 508, 512, 516, 1024);
+        .};
+}
+
+machine ModelProgram() : Main where ForExploration = true
+{
+    construct model program from ParameterConfiguration
+        where scope = "TFTPproject.ModelProgram"
+}
+
+machine SendScenario() : Main where ForExploration = true
+{
+    sendReadRequestAdapter; receiveDataBlockAdapter; (sendACKAdapter; receiveDataBlockAdapter; canGetExitAdapter;)+
+}
+
+machine WriteScenario() : Main where ForExploration = true
+{
+    sendWriteRequestAdapter; receiveACKAdapter; sendDataBlockAdapter; (receiveACKAdapter; sendDataBlockAdapter; canPutExitAdapter;)+
+}
+
+// State pattern checker send scenario
+machine SendScenarioWithCheckers() : Main where ForExploration = true
+{
+    sendReadRequestAdapter; receiveDataBlockAdapter; (sendACKAdapter; receiveDataBlockAdapter; canGetExitAdapter;)+ ||| checker*
+}
+
+// State pattern checker write scenario
+machine WriteScenarioWithCheckers() : Main where ForExploration = true
+{
+    sendWriteRequestAdapter; receiveACKAdapter; sendDataBlockAdapter; (receiveACKAdapter; sendDataBlockAdapter; canPutExitAdapter;)+ ||| checker*
+}
+
+machine SlicedSendScenario() : Main where ForExploration = true
+{
+    SendScenario || ModelProgram
+}
+
+machine SlicedWriteScenario() : Main where ForExploration = true
+{
+    WriteScenario || ModelProgram
+}
+
+// Checked model machine
+machine SlicedSendScenarioWithCheckers() : Main where ForExploration = true
+{
+    SendScenarioWithCheckers || ModelProgram
+}
+
+// Checked model machine
+machine SlicedWriteScenarioWithCheckers() : Main where ForExploration = true
+{
+    WriteScenarioWithCheckers || ModelProgram
+}
+
+/*
+machine SendTestSuite() : Main where ForExploration = true, TestEnabled = true
+{
+    construct test cases where strategy = "ShortTests" for SlicedSendScenario()
+}
+
+machine WriteTestSuite() : Main where ForExploration = true, TestEnabled = true
+{
+    construct test cases where strategy = "ShortTests" for SlicedWriteScenario()
+}
+*/
+
+// Checked Send test suite
+machine SendTestSuiteWithCheckers() : Main where ForExploration = true, TestEnabled = true
+{
+    construct test cases for SlicedSendScenarioWithCheckers
+}
+
+// Checked Send test suite
+machine WriteTestSuiteWithCheckers() : Main where ForExploration = true, TestEnabled = true
+{
+    construct test cases for SlicedWriteScenarioWithCheckers
+}
