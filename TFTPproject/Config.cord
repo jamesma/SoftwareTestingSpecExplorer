@@ -17,6 +17,7 @@ config Main
     action abstract static void TestAdapter.receiveACKAdapter();
     action abstract static bool TestAdapter.canPutExitAdapter(int len);
 
+    // Checker method for TestAdapter, see: http://msdn.microsoft.com/en-us/library/ee620464.aspx
     action abstract static void TestAdapter.checker(int m);
 
     switch StateBound = none;
@@ -110,7 +111,7 @@ machine SendTestSuiteWithCheckers() : Main where ForExploration = true, TestEnab
     construct test cases for SlicedSendScenarioWithCheckers
 }
 
-// Checked Send test suite
+// Checked Write test suite
 machine WriteTestSuiteWithCheckers() : Main where ForExploration = true, TestEnabled = true
 {
     construct test cases for SlicedWriteScenarioWithCheckers
