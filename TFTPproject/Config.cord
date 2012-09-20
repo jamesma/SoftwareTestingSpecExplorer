@@ -35,12 +35,12 @@ config ParameterConfiguration : Main
     action abstract static bool TestAdapter.canGetExitAdapter(int len)
         where
         {.
-            Condition.In(len, 510, 520);
+            Condition.In(len, 8, 510, 520);
         .};
     action abstract static bool TestAdapter.canPutExitAdapter(int len)
         where
         {.
-            Condition.In(len, 510, 520);
+            Condition.In(len, 8, 510, 520);
         .};
 }
 
