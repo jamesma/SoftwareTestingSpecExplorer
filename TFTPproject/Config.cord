@@ -7,6 +7,8 @@ using TFTPproject.TestAdapter;
 /// Contains actions of the model, bounds, and switches.
 config Main 
 {
+    action abstract static void TestAdapter.initializeAdapter();
+
     action abstract static void TestAdapter.sendReadRequestAdapter();
     action abstract static void TestAdapter.receiveDataBlockAdapter();
     action abstract static void TestAdapter.sendACKAdapter();
@@ -17,7 +19,6 @@ config Main
     action abstract static void TestAdapter.receiveACKAdapter();
     action abstract static bool TestAdapter.canPutExitAdapter(int len);
 
-    // Checker method for TestAdapter, see: http://msdn.microsoft.com/en-us/library/ee620464.aspx
     action abstract static void TestAdapter.checker(int m);
 
     switch StateBound = none;
@@ -34,12 +35,12 @@ config ParameterConfiguration : Main
     action abstract static bool TestAdapter.canGetExitAdapter(int len)
         where
         {.
-            Condition.In(len, 0, 8, 508, 512, 516, 1024);
+            Condition.In(len, 510, 520);
         .};
     action abstract static bool TestAdapter.canPutExitAdapter(int len)
         where
         {.
-            Condition.In(len, 0, 8, 508, 512, 516, 1024);
+            Condition.In(len, 510, 520);
         .};
 }
 
@@ -51,24 +52,24 @@ machine ModelProgram() : Main where ForExploration = true
 
 machine SendScenario() : Main where ForExploration = true
 {
-    sendReadRequestAdapter; receiveDataBlockAdapter; (sendACKAdapter; receiveDataBlockAdapter; canGetExitAdapter;)+
+    initializeAdapter; sendReadRequestAdapter; receiveDataBlockAdapter; (sendACKAdapter; receiveDataBlockAdapter; canGetExitAdapter;)+
 }
 
 machine WriteScenario() : Main where ForExploration = true
 {
-    sendWriteRequestAdapter; receiveACKAdapter; sendDataBlockAdapter; (receiveACKAdapter; sendDataBlockAdapter; canPutExitAdapter;)+
+    initializeAdapter; sendWriteRequestAdapter; receiveACKAdapter; sendDataBlockAdapter; (receiveACKAdapter; sendDataBlockAdapter; canPutExitAdapter;)+
 }
 
 // State pattern checker send scenario
 machine SendScenarioWithCheckers() : Main where ForExploration = true
 {
-    sendReadRequestAdapter; receiveDataBlockAdapter; (sendACKAdapter; receiveDataBlockAdapter; canGetExitAdapter;)+ ||| checker*
+    initializeAdapter; sendReadRequestAdapter; receiveDataBlockAdapter; (sendACKAdapter; receiveDataBlockAdapter; canGetExitAdapter;)+ ||| checker*
 }
 
 // State pattern checker write scenario
 machine WriteScenarioWithCheckers() : Main where ForExploration = true
 {
-    sendWriteRequestAdapter; receiveACKAdapter; sendDataBlockAdapter; (receiveACKAdapter; sendDataBlockAdapter; canPutExitAdapter;)+ ||| checker*
+    initializeAdapter; sendWriteRequestAdapter; receiveACKAdapter; sendDataBlockAdapter; (receiveACKAdapter; sendDataBlockAdapter; canPutExitAdapter;)+ ||| checker*
 }
 
 machine SlicedSendScenario() : Main where ForExploration = true
@@ -108,11 +109,11 @@ machine WriteTestSuite() : Main where ForExploration = true, TestEnabled = true
 // Checked Send test suite
 machine SendTestSuiteWithCheckers() : Main where ForExploration = true, TestEnabled = true
 {
-    construct test cases for SlicedSendScenarioWithCheckers
+    construct test cases where Strategy = "ShortTests" for SlicedSendScenarioWithCheckers
 }
 
 // Checked Write test suite
 machine WriteTestSuiteWithCheckers() : Main where ForExploration = true, TestEnabled = true
 {
-    construct test cases for SlicedWriteScenarioWithCheckers
+    construct test cases where Strategy = "ShortTests" for SlicedWriteScenarioWithCheckers
 }

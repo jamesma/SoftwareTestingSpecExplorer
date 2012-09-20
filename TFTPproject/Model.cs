@@ -10,39 +10,61 @@ namespace TFTPproject
 {
     static class ModelProgram
     {
-        static TFTPClient.FSM_Modes FSM_Mode = TFTPClient.FSM_Modes.INIT;
+        public enum FSM_Modes
+        {
+            BEFORE_INIT = -1,
+            INIT = 0,
+            EXIT = 1,
+            ERROR = 2,
+            RRQ_SENT = 3,
+            DATA_RECEIVED = 4,
+            ACK_SENT = 5,
+            WRQ_SENT = 6,
+            ACK_RECEIVED = 7,
+            DATA_SENT = 8,
+        }
+
+        static FSM_Modes FSM_Mode = FSM_Modes.BEFORE_INIT;
+
+        [Rule(Action = "initializeAdapter()")]
+        static void initialize()
+        {
+            Condition.IsTrue(FSM_Mode == FSM_Modes.BEFORE_INIT);
+
+            FSM_Mode = FSM_Modes.INIT;
+        }
 
         [Rule(Action = "sendReadRequestAdapter()")]
         static void sendReadRequest()
         {
-            Condition.IsTrue(FSM_Mode == TFTPClient.FSM_Modes.INIT);
+            Condition.IsTrue(FSM_Mode == FSM_Modes.INIT);
 
-            FSM_Mode = TFTPClient.FSM_Modes.RRQ_SENT;
+            FSM_Mode = FSM_Modes.RRQ_SENT;
         }
 
         [Rule(Action = "receiveDataBlockAdapter()")]
         static void receiveDataBlock()
         {
-            Condition.IsTrue(FSM_Mode == TFTPClient.FSM_Modes.RRQ_SENT || FSM_Mode == TFTPClient.FSM_Modes.ACK_SENT);
+            Condition.IsTrue(FSM_Mode == FSM_Modes.RRQ_SENT || FSM_Mode == FSM_Modes.ACK_SENT);
 
-            FSM_Mode = TFTPClient.FSM_Modes.DATA_RECEIVED;
+            FSM_Mode = FSM_Modes.DATA_RECEIVED;
         }
 
         [Rule(Action = "sendACKAdapter()")]
         static void sendACK()
         {
-            Condition.IsTrue(FSM_Mode == TFTPClient.FSM_Modes.DATA_RECEIVED);
+            Condition.IsTrue(FSM_Mode == FSM_Modes.DATA_RECEIVED);
 
-            FSM_Mode = TFTPClient.FSM_Modes.ACK_SENT;
+            FSM_Mode = FSM_Modes.ACK_SENT;
         }
 
         [Rule(Action = "canGetExitAdapter(len)/result")]
         static bool canGetExit(int len)
         {
-            Condition.IsTrue(FSM_Mode == TFTPClient.FSM_Modes.DATA_RECEIVED);
-            if (len < 512)
+            Condition.IsTrue(FSM_Mode == FSM_Modes.DATA_RECEIVED);
+            if (len < 516)
             {
-                FSM_Mode = TFTPClient.FSM_Modes.EXIT;
+                FSM_Mode = FSM_Modes.EXIT;
                 return true;
             }
             return false;
@@ -51,34 +73,34 @@ namespace TFTPproject
         [Rule(Action = "sendWriteRequestAdapter()")]
         static void sendWriteRequest()
         {
-            Condition.IsTrue(FSM_Mode == TFTPClient.FSM_Modes.INIT);
+            Condition.IsTrue(FSM_Mode == FSM_Modes.INIT);
 
-            FSM_Mode = TFTPClient.FSM_Modes.WRQ_SENT;
+            FSM_Mode = FSM_Modes.WRQ_SENT;
         }
 
         [Rule(Action = "sendDataBlockAdapter()")]
         static void sendDataBlock()
         {
-            Condition.IsTrue(FSM_Mode == TFTPClient.FSM_Modes.ACK_RECEIVED);
+            Condition.IsTrue(FSM_Mode == FSM_Modes.ACK_RECEIVED);
 
-            FSM_Mode = TFTPClient.FSM_Modes.DATA_SENT;
+            FSM_Mode = FSM_Modes.DATA_SENT;
         }
 
         [Rule(Action = "receiveACKAdapter()")]
         static void receiveACK()
         {
-            Condition.IsTrue(FSM_Mode == TFTPClient.FSM_Modes.WRQ_SENT || FSM_Mode == TFTPClient.FSM_Modes.DATA_SENT);
+            Condition.IsTrue(FSM_Mode == FSM_Modes.WRQ_SENT || FSM_Mode == FSM_Modes.DATA_SENT);
 
-            FSM_Mode = TFTPClient.FSM_Modes.ACK_RECEIVED;
+            FSM_Mode = FSM_Modes.ACK_RECEIVED;
         }
 
         [Rule(Action = "canPutExitAdapter(len)/result")]
         static bool canPutExit(int len)
         {
-            Condition.IsTrue(FSM_Mode == TFTPClient.FSM_Modes.DATA_SENT);
-            if (len < 512)
+            Condition.IsTrue(FSM_Mode == FSM_Modes.DATA_SENT);
+            if (len < 516)
             {
-                FSM_Mode = TFTPClient.FSM_Modes.EXIT;
+                FSM_Mode = FSM_Modes.EXIT;
                 return true;
             }
             return false;
@@ -88,7 +110,7 @@ namespace TFTPproject
         [AcceptingStateCondition]
         static bool exitModeReached()
         {
-            if (FSM_Mode == TFTPClient.FSM_Modes.EXIT)
+            if (FSM_Mode == FSM_Modes.EXIT)
                 return true;
             return false;
         }

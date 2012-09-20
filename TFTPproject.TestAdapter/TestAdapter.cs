@@ -10,7 +10,7 @@ namespace TFTPproject.TestAdapter
 {
     public class TestAdapter
     {
-        public static TFTPClient client = initializeAdapter();
+        public static TFTPClient client = null;
 
         public static string LOCAL_FILE_PATH = createLocalFile();
         public static string REMOTE_FILE_PATH = @"remote.txt";
@@ -47,20 +47,20 @@ namespace TFTPproject.TestAdapter
         /// <param name="mode"></param>
         public static void checker(int m)
         {
-            Microsoft.VisualStudio.TestTools.UnitTesting.Assert.AreEqual
-                (m, (int)client.tftpClientMode, "TestAdapter mismatch: Model vs Implementation");
+            if (m != -1)
+                Microsoft.VisualStudio.TestTools.UnitTesting.Assert.AreEqual
+                    (m, (int)client.tftpClientMode, "TestAdapter mismatch: Model vs Implementation");
         }
 
         /// <summary>
         /// Initialze the TFTP client. Set the state to be INIT
         /// </summary>
-        public static TFTPClient initializeAdapter()
+        public static void initializeAdapter()
         {
-            TFTPClient c = new TFTPClient("127.0.0.1", 69);
+            client = new TFTPClient("127.0.0.1", 69);
             // Connect to the local server
-            c.initialize();
+            client.initialize();
             LOCAL_FILE_PATH = createLocalFile();
-            return c;
         }
 
         /// <summary>
